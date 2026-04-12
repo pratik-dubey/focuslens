@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 280px;
+      font-family: 'Space Mono', 'Courier New', monospace;
+      background: #FAFAFA;
+      color: #0A0A0A;
+    }
+
+    .header {
+      background: #FFE500;
+      border-bottom: 3px solid #0A0A0A;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+      background: #0A0A0A;
+      color: #FFE500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      border: 2px solid #0A0A0A;
+    }
+
+    .toggle-wrap {
+      padding: 14px;
+      border-bottom: 3px solid #0A0A0A;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: #D3D1C7;
+      border: 2px solid #0A0A0A;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .slider:before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 2px;
+      top: 2px;
+      background: #0A0A0A;
+      transition: 0.15s;
+    }
+
+    input:checked+.slider {
+      background: #FFE500;
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(20px);
+    }
+
+    .score-box {
+      margin: 14px;
+      border: 3px solid #0A0A0A;
+      padding: 14px;
+      background: #FAFAFA;
+      box-shadow: 4px 4px 0 #0A0A0A;
+    }
+
+    .score-label {
+      font-size: 10px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .score-val {
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .score-bar {
+      margin-top: 10px;
+      height: 8px;
+      background: #F1EFE8;
+      border: 2px solid #0A0A0A;
+    }
+
+    .score-fill {
+      height: 100%;
+      transition: width 0.5s;
+    }
+
+    .score-sub {
+      font-size: 10px;
+      color: #888;
+      margin-top: 6px;
+    }
+
+    .actions {
+      padding: 0 14px 14px;
+      display: flex;
+      flex-col: column;
+      gap: 8px;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 9px 12px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      border: 3px solid #0A0A0A;
+      cursor: pointer;
+      text-align: left;
+      box-shadow: 3px 3px 0 #0A0A0A;
+      transition: all 0.1s;
+    }
+
+    .btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 #0A0A0A;
+    }
+
+    .btn-yellow {
+      background: #FFE500;
+    }
+
+    .btn-dark {
+      background: #0A0A0A;
+      color: #FFE500;
+    }
+
+    .btn-white {
+      background: #FAFAFA;
+    }
+
+    .status {
+      padding: 0 14px 14px;
+    }
+
+    .status-pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border: 2px solid #0A0A0A;
+    }
+
+    .pill-on {
+      background: #C4F5A0;
+    }
+
+    .pill-off {
+      background: #F1EFE8;
+      color: #888;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">FL</div>
+      FocusLens
+    </div>
+    <div id="status-pill" class="status-pill pill-off">OFF</div>
+  </div>
+
+  <div class="toggle-wrap">
+    <span class="toggle-label">Track this site</span>
+    <label class="toggle">
+      <input type="checkbox" id="toggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="score-box">
+    <div class="score-label">CURRENT FOCUS SCORE</div>
+    <div class="score-val" id="score-val">—</div>
+    <div class="score-bar">
+      <div class="score-fill" id="score-fill" style="width:0%;background:#AFA9EC;"></div>
+    </div>
+    <div class="score-sub" id="score-sub">Enable tracking to start</div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-yellow" id="btn-dashboard">Open dashboard →</button>
+    <button class="btn btn-white" id="btn-daily">Today's report</button>
+    <button class="btn btn-dark" id="btn-ask">Ask AI tutor</button>
+  </div>
+
+  <!-- ✅ External script instead of inline -->
+  <script src="popup.js"></script>
+</body>
+
+</html>
