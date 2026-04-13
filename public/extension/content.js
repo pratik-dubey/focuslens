@@ -1,31 +1,58 @@
-// FocusLens content.js — injected on every page
-// Tracks: idle time, re-scrolls, reading speed → sends to background worker
+// FocusLens content.js
+const API_BASE = 'http://localhost:3000'
 
-const API_BASE = 'http://localhost:3000' // change to production URL when deployed
+let lastActivity  = Date.now()
+let reScrollCount = 0
+let lastScrollY   = window.scrollY
+let sessionStart  = Date.now()
+let enabled       = false
+let sessionId     = null
+let authCheckDone = false
+let intervalId    = null
 
-let idleTimer      = 0
-let lastActivity   = Date.now()
-let reScrollCount  = 0
-let lastScrollY    = window.scrollY
-let wordsRead      = 0
-let sessionStart   = Date.now()
-let enabled        = false
-let sessionId      = null
+const LEARNING_SITES = [
+  'youtube.com', 'youtu.be',
+  'coursera.org', 'udemy.com',
+  'khanacademy.org', 'edx.org',
+  'linkedin.com', 'skillshare.com',
+  'pluralsight.com', 'egghead.io',
+  'frontendmasters.com', 'vimeo.com',
+  'geeksforgeeks.org', 'leetcode.com',
+]
 
-// ── Check if user is logged in ──────────────────────────────────
+// Never treat our own site as a learning platform
+// This is what was causing the infinite tab loop
+function isLearningPlatform() {
+  const host = location.hostname
+  if (
+    host.includes('localhost') ||
+    host.includes('127.0.0.1') ||
+    host.includes('focuslens.app') ||
+    host.includes('vercel.app')
+  ) return false
+  return LEARNING_SITES.some(s => host.includes(s))
+}
+
 async function checkAuth() {
+  if (authCheckDone) return true
+  authCheckDone = true
   try {
-    const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
+    const res = await fetch(`${API_BASE}/api/auth/me`, {
+      credentials: 'include',
+      signal: AbortSignal.timeout(5000),
+    })
     if (!res.ok) {
-      // Not logged in → open landing page
-      chrome.runtime.sendMessage({ type: 'NOT_LOGGED_IN' })
+      if (isLearningPlatform()) {
+        chrome.runtime.sendMessage({ type: 'NOT_LOGGED_IN' })
+      }
       return false
     }
     return true
-  } catch { return false }
+  } catch {
+    return false
+  }
 }
 
-// ── Activity listeners ─────────────────────────────────────────
 function resetIdle() { lastActivity = Date.now() }
 document.addEventListener('mousemove', resetIdle, { passive: true })
 document.addEventListener('keydown',   resetIdle, { passive: true })
@@ -33,34 +60,30 @@ document.addEventListener('click',     resetIdle, { passive: true })
 
 document.addEventListener('scroll', () => {
   const curr = window.scrollY
-  if (curr < lastScrollY - 50) reScrollCount++ // scrolled up = re-read
+  if (curr < lastScrollY - 50) reScrollCount++
   lastScrollY = curr
   resetIdle()
 }, { passive: true })
 
-// Estimate words read via visible text
 function countVisibleWords() {
-  const text = document.body.innerText || ''
-  return text.trim().split(/\s+/).length
+  return (document.body.innerText || '').trim().split(/\s+/).length
 }
 
-// ── Compute focus score (0-100) ─────────────────────────────────
 function computeScore(idleSecs, reScrolls, readingSpeed) {
-  const idlePenalty   = Math.min(idleSecs / 120, 1) * 40   // up to -40 for 2+ min idle
-  const scrollPenalty = Math.min(reScrolls / 10, 1) * 30   // up to -30 for 10+ re-scrolls
-  const speedBonus    = Math.min(readingSpeed / 200, 1) * 30 // up to +30 for good speed
+  const idlePenalty   = Math.min(idleSecs / 120,  1) * 40
+  const scrollPenalty = Math.min(reScrolls / 10,   1) * 30
+  const speedBonus    = Math.min(readingSpeed / 200, 1) * 30
   return Math.round(Math.max(0, Math.min(100, 100 - idlePenalty - scrollPenalty + speedBonus)))
 }
 
-// ── Send signal to backend ──────────────────────────────────────
 async function sendSignal() {
   if (!enabled) return
-  const now           = Date.now()
-  const idleSeconds   = Math.round((now - lastActivity) / 1000)
-  const totalSeconds  = Math.round((now - sessionStart) / 1000)
-  const currentWords  = countVisibleWords()
-  const readingSpeed  = totalSeconds > 0 ? Math.round((currentWords / totalSeconds) * 60) : 0
-  const focusScore    = computeScore(idleSeconds, reScrollCount, readingSpeed)
+  const now          = Date.now()
+  const idleSeconds  = Math.round((now - lastActivity) / 1000)
+  const totalSeconds = Math.round((now - sessionStart) / 1000)
+  const currentWords = countVisibleWords()
+  const readingSpeed = totalSeconds > 0 ? Math.round((currentWords / totalSeconds) * 60) : 0
+  const focusScore   = computeScore(idleSeconds, reScrollCount, readingSpeed)
 
   try {
     const res = await fetch(`${API_BASE}/api/session`, {
@@ -80,44 +103,47 @@ async function sendSignal() {
       }),
     })
     if (res.ok) {
-      const data = await res.json()
-      sessionId = data.sessionId
-      reScrollCount = 0 // reset per interval
-
-      // Notify background of current score
+      const data    = await res.json()
+      sessionId     = data.sessionId
+      reScrollCount = 0
+      chrome.storage.local.set({ fl_score: focusScore })
       chrome.runtime.sendMessage({ type: 'SCORE_UPDATE', score: focusScore, pageTitle: document.title })
-
-      // Trigger overlay if score < 60
       if (focusScore < 60) {
         chrome.runtime.sendMessage({ type: 'SHOW_OVERLAY', score: focusScore, pageTitle: document.title })
       }
     }
-  } catch (err) { console.log('FocusLens: signal send failed', err) }
+  } catch (err) {
+    console.log('FocusLens: signal send failed', err)
+  }
 }
 
-// ── Init ────────────────────────────────────────────────────────
-chrome.storage.local.get(['fl_enabled'], async ({ fl_enabled }) => {
-  enabled = fl_enabled || false
-  if (!enabled) return
-
+async function startTracking() {
+  if (intervalId) return
   const authed = await checkAuth()
   if (!authed) return
-
   sessionStart = Date.now()
-  wordsRead    = countVisibleWords()
-  setInterval(sendSignal, 15000) // every 15 seconds
+  intervalId   = setInterval(sendSignal, 15000)
+  console.log('FocusLens: tracking started on', location.hostname)
+}
+
+chrome.storage.local.get(['fl_enabled'], ({ fl_enabled }) => {
+  enabled = fl_enabled || false
+  if (!enabled) return
+  startTracking()
 })
 
-// Listen for enable/disable from popup
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === 'SET_ENABLED') {
     enabled = msg.enabled
     chrome.storage.local.set({ fl_enabled: enabled })
-    if (enabled) { sessionStart = Date.now(); checkAuth() }
+    if (enabled) {
+      startTracking()
+    } else {
+      if (intervalId) { clearInterval(intervalId); intervalId = null }
+    }
   }
 })
 
-// End session on unload
 window.addEventListener('beforeunload', () => {
   if (sessionId) {
     navigator.sendBeacon(`${API_BASE}/api/session`, JSON.stringify({ sessionId, _method: 'PATCH' }))
