@@ -66,11 +66,11 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 pt-16 pb-20 grid md:grid-cols-2 gap-12 items-center">
         <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
           <div className="tag-brutal bg-brand-yellow mb-4 inline-block">Chrome Extension + Dashboard</div>
-          <h1 className="font-mono font-bold text-5xl md:text-6xl leading-tight mb-6">
-            Know exactly<br/>
-            <span className="px-2 w-4 h-4">when</span> you<br/>
-            actually learn.
-          </h1>
+<h1 className="font-mono font-bold text-5xl md:text-6xl leading-normal mb-6">
+  Know exactly<br/>
+  <span className="bg-brand-yellow px-2 inline-block leading-tight">when</span> you<br/>
+  actually learn.
+</h1>
           <p className="text-base text-gray-600 mb-8 max-w-md leading-relaxed">
             FocusLens tracks your real focus on any learning platform. When you start burning out, an AI tutor steps in — not with a break reminder, but with a quiz that actually rescues your session.
           </p>
