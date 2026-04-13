@@ -2,50 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
-
 @layer base {
-  * { box-sizing: border-box; }
-  body { background: #FAFAFA; }
-  ::selection { background: #FFE500; color: #0A0A0A; }
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  body {
+    background: #FAFAFA;
+  }
+
+  ::selection {
+    background: #FFE500;
+    color: #0A0A0A;
+  }
+
+  code,
+  pre,
+  kbd,
+  .font-mono {
+    font-family: 'Space Mono', monospace;
+  }
 }
 
 @layer components {
   .btn-brutal {
-    @apply inline-flex items-center gap-2 px-5 py-3 font-mono font-bold text-sm
-           border-3 border-brand-black bg-brand-yellow text-brand-black
-           shadow-brutal transition-all duration-100
-           hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-brutal-sm
-           active:translate-x-[4px] active:translate-y-[4px] active:shadow-none
-           cursor-pointer select-none;
+    @apply inline-flex items-center gap-2 px-5 py-3 font-mono font-bold text-sm border-3 border-brand-black bg-brand-yellow text-brand-black shadow-brutal transition-all duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-brutal-sm active:translate-x-[4px] active:translate-y-[4px] active:shadow-none cursor-pointer select-none;
   }
+
   .btn-brutal-dark {
     @apply btn-brutal bg-brand-black text-brand-yellow;
   }
+
   .btn-brutal-outline {
     @apply btn-brutal bg-brand-white text-brand-black;
   }
+
   .card-brutal {
     @apply border-3 border-brand-black bg-brand-white shadow-brutal;
   }
+
   .card-brutal-yellow {
     @apply border-3 border-brand-black bg-brand-yellow shadow-brutal;
   }
+
   .input-brutal {
-    @apply w-full border-3 border-brand-black px-4 py-3 font-mono text-sm
-           bg-brand-white outline-none shadow-brutal-inset
-           focus:bg-brand-yellow/20 transition-colors;
+    @apply w-full border-3 border-brand-black px-4 py-3 font-mono text-sm bg-brand-white outline-none shadow-brutal-inset focus:bg-brand-yellow/20 transition-colors;
   }
+
   .tag-brutal {
     @apply inline-block border-2 border-brand-black px-2 py-0.5 text-xs font-mono font-bold;
   }
 }
 
-/* Heatmap overrides */
-.react-calendar-heatmap rect { rx: 2; }
-.color-scale-0 { fill: #F1EFE8; }
-.color-scale-1 { fill: #CECBF6; }
-.color-scale-2 { fill: #AFA9EC; }
-.color-scale-3 { fill: #7F77DD; }
-.color-scale-4 { fill: #534AB7; }
-.color-scale-5 { fill: #3C3489; }
+.react-calendar-heatmap rect {
+  rx: 2;
+}
+
+.color-scale-0 {
+  fill: #F1EFE8;
+}
+
+.color-scale-1 {
+  fill: #CECBF6;
+}
+
+.color-scale-2 {
+  fill: #AFA9EC;
+}
+
+.color-scale-3 {
+  fill: #7F77DD;
+}
+
+.color-scale-4 {
+  fill: #534AB7;
+}
+
+.color-scale-5 {
+  fill: #3C3489;
+}
